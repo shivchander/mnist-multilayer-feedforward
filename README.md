@@ -1,2 +1,2 @@
 # mnist-multilayer-feedforward
-Multi Layer Feed Forward Neural Net implemented from scratch
+Multi Class Classification of MNIST Dataset using Multi Layer Feed Forward Neural Net implemented from scratch
