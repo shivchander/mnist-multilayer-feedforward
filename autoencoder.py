@@ -1,25 +1,23 @@
-#!/usr/bin/env python3
 __author__ = "Shivchander Sudalairaj"
 __license__ = "MIT"
 
 '''
-Model Definition: Multi Layer DenseNN
+Autoencoder of MNIST Dataset using Multi Layer Feed Forward Neural Net implemented from scratch
 '''
 
 import numpy as np
-import pandas as pd
 import math
 import matplotlib.pyplot as plt
 
 np.random.seed(1)
 
 
-class DenseNN(object):
+class AutoencoderNN(object):
     def __init__(self):
         self.n_x = 784
         self.n_h = 100
-        self.n_l = 3
-        self.n_y = 10
+        self.n_l = 1
+        self.n_y = 784
         self.layer_dims = []
         self.parameters = {}
         self.X = None
@@ -35,9 +33,6 @@ class DenseNN(object):
         for l in range(1, len(self.layer_dims)):
             self.parameters['W' + str(l)] = np.random.randn(self.layer_dims[l], self.layer_dims[l - 1]) * 0.01
             self.parameters['b' + str(l)] = np.zeros((self.layer_dims[l], 1))
-
-            assert (self.parameters['W' + str(l)].shape == (self.layer_dims[l], self.layer_dims[l - 1]))
-            assert (self.parameters['b' + str(l)].shape == (self.layer_dims[l], 1))
 
         return self.parameters
 
@@ -89,11 +84,10 @@ class DenseNN(object):
         return AL, caches
 
     def compute_cost(self, AL, Y):
-        from sklearn.metrics import log_loss
         m = Y.shape[1]
         cost = 0
         for yt, yp in zip(Y.T, AL.T):
-            cost += log_loss(yt, yp)
+            cost += np.square(yt-yp).mean()
         return cost / m
 
     def linear_backward(self, dZ, cache):
@@ -142,7 +136,8 @@ class DenseNN(object):
         m = AL.shape[1]
         Y = Y.reshape(AL.shape)
 
-        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+        # dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+        dAL = 2*(AL - Y)
         current_cache = caches[L - 1]
         grads["dA" + str(L)], grads["dW" + str(L)], grads["db" + str(L)] = self.linear_activation_backward(dAL,
                                                                                                            current_cache,
@@ -187,7 +182,7 @@ class DenseNN(object):
 
         permutation = list(np.random.permutation(m))
         shuffled_X = X[:, permutation]
-        shuffled_Y = Y[:, permutation].reshape((10, m))
+        shuffled_Y = Y[:, permutation]
 
         num_complete_minibatches = math.floor(m / mini_batch_size)
         for k in range(0, num_complete_minibatches):
@@ -235,23 +230,15 @@ class DenseNN(object):
 
             # Print the cost every 10 epoch
             if plot_error and i % 10 == 0:
-                from sklearn.metrics import balanced_accuracy_score
-                y_preds = self.predict(self.X.T)
-                balanced_acc = balanced_accuracy_score(np.argmax(self.y.T, axis=1), np.argmax(y_preds, axis=1))
-                error = 1 - balanced_acc
-                print("Error after epoch %i: %f" % (i, error))
-                errors.append(error)
-
-            if error <= 0.01:
-                print('Error is less than 1%. Stopping Training')
-                break
+                print("Error after epoch %i: %f" % (i, cost))
+                errors.append(cost)
 
         if plot_error:
             plt.plot(list(range(0, len(errors) * 10, 10)), errors)
-            plt.ylabel('Error (1 - balanced acc)')
+            plt.ylabel('Mean Squared Error')
             plt.xlabel('epochs')
             plt.title('Training Error')
-            plt.savefig('figs/error.pdf')
+            plt.savefig('figs/autoencoder_error.pdf')
             plt.clf()
 
         return self.parameters
@@ -273,13 +260,3 @@ class DenseNN(object):
         a, caches = self.forward_propagation(X, self.parameters)
 
         return self.threshold_function(a.T)
-
-
-def plot_confusion_matrix(y_true, y_pred):
-    from sklearn.metrics import confusion_matrix
-    cm = confusion_matrix(np.argmax(y_true, axis=1), np.argmax(y_pred, axis=1))
-    import seaborn as sns
-    df_cm = pd.DataFrame(cm, range(10), range(10))
-    sns.set(font_scale=1.4)
-    sns.heatmap(df_cm, annot=True)
-    plt.savefig('figs/cm.pdf')
