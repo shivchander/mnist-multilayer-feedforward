@@ -6,6 +6,10 @@ __license__ = "MIT"
 Multi Class Classification of MNIST Dataset using Multi Layer Feed Forward Neural Net implemented from scratch
 '''
 import pandas as pd
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.metrics import balanced_accuracy_score
+import numpy as np
+from model import DenseNN, plot_confusion_matrix
 
 
 def parse_data(feature_file, label_file):
@@ -43,13 +47,31 @@ def split_data(dataset):
     test_df.to_csv('dataset/MNIST_Test.csv', sep=',', index=False)
 
 
-data = parse_data('dataset/MNISTnumImages5000_balanced.txt', 'dataset/MNISTnumLabels5000_balanced.txt')
-split_data(data)
-train = pd.read_csv('dataset/MNIST_Train.csv', sep=",")
-test = pd.read_csv('dataset/MNIST_Test.csv', sep=",")
+def get_train_test(train_file, test_file):
+    train = pd.read_csv(train_file, sep=",")
+    y_train = train['label'].values.reshape(4000, 1)
+    mlb = MultiLabelBinarizer()
+    y_train = mlb.fit_transform(y_train)
+    X_train = train.iloc[:, :-1].values
+
+    test = pd.read_csv(test_file, sep=",")
+    y_test = test['label'].values.reshape(1000, 1)
+    y_test = mlb.fit_transform(y_test)
+    X_test = test.iloc[:, :-1].values
+
+    return X_train, y_train, X_test, y_test
 
 
+if __name__ == '__main__':
+    # data = parse_data('dataset/MNISTnumImages5000_balanced.txt', 'dataset/MNISTnumLabels5000_balanced.txt')
+    # split_data(data)
+    # train = pd.read_csv('dataset/MNIST_Train.csv', sep=",")
+    # test = pd.read_csv('dataset/MNIST_Test.csv', sep=",")
 
-
-
-
+    X_train, y_train, X_test, y_test = get_train_test('dataset/MNIST_Train.csv', 'dataset/MNIST_Test.csv')
+    model = DenseNN()
+    model.fit(X_train, y_train, 784, 200, 2, 10, learning_rate=0.01, batch_size=32,
+              num_epochs=150, plot_error=True)
+    y_preds = model.predict(X_test)
+    print('Accuracy: ', balanced_accuracy_score(np.argmax(y_test, axis=1), np.argmax(y_preds, axis=1)))
+    plot_confusion_matrix(y_test, y_preds)
