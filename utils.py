@@ -97,8 +97,8 @@ def random_outputs(model, X_test):
 
     fig, ax = plt.subplots(2, 8)
     for i in range(8):
-        ax[0][i].imshow(sample_X[i].reshape(28,28).T, cmap = 'gray')
-        ax[1][i].imshow(sample_pred[i].reshape(28,28).T, cmap = 'gray')
+        ax[0][i].imshow(sample_X[i].reshape(28,28).T, cmap='gray')
+        ax[1][i].imshow(sample_pred[i].reshape(28,28).T, cmap='gray')
     plt.savefig('figs/random_output.pdf')
 
 
