@@ -102,3 +102,30 @@ def random_outputs(model, X_test):
     plt.savefig('figs/random_output.pdf')
 
 
+def compare_features(classifier_weights, autoencoder_weights):
+    idx = np.random.randint(200, size=20)
+    c_weights = classifier_weights[idx, :]
+    a_weights = autoencoder_weights[idx, :]
+
+    fig, ax = plt.subplots(4, 5)
+    pos = 0
+    for i in range(4):
+        for j in range(5):
+            x = (c_weights[pos] - np.min(c_weights[pos]))/np.ptp(c_weights[pos])
+            ax[i][j].imshow(x.reshape(28,28).T, cmap='gray')
+            pos+=1
+    fig.suptitle('Classifier Features')
+    fig.savefig('figs/classifier_features.pdf')
+    fig.clf()
+
+    fig, ax = plt.subplots(4, 5)
+    pos = 0
+    for i in range(4):
+        for j in range(5):
+            x = (a_weights[pos] - np.min(a_weights[pos]))/np.ptp(a_weights[pos])
+            ax[i][j].imshow(x.reshape(28,28).T, cmap='gray')
+            pos+=1
+    fig.suptitle('Autoencoder Features')
+    fig.savefig('figs/autoencoder_features.pdf')
+    fig.clf()
+
